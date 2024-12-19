@@ -10,4 +10,4 @@ An NVDA addon to improve the accessibility of the v2rayN application.
 - Adds proper labels to menu items, buttons, combo boxes, and text fields.
 
 ## Compatibility
-- **NVDA Version**: 2021.2 and above.
+- **NVDA Version**: 2023.1 and above.
