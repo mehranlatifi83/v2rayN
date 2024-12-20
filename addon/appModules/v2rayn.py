@@ -25,6 +25,6 @@ class AppModule(appModuleHandler.AppModule):
         elif obj.role == Role.EDITABLETEXT:
             name = obj.previous.name if not obj.name and obj.previous and obj.previous.role == Role.STATICTEXT and obj.previous.name else obj.next.name if not obj.name and obj.next and obj.next.role == Role.STATICTEXT and obj.next.name else obj.name
             obj.name = name
-        if obj.role == Role.WINDOW:
+        if obj.role == Role.WINDOW and obj.firstChild.firstChild.firstChild.firstChild and obj.firstChild.firstChild.firstChild.firstChild.name == "Clear system proxy":
             obj.firstChild.firstChild.firstChild.setFocus()
         nextHandler()
