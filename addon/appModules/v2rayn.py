@@ -3,6 +3,30 @@ import appModuleHandler
 from NVDAObjects import NVDAObject
 from controlTypes import Role
 import api
+from NVDAObjects.UIA import UIA
+from scriptHandler import script
+
+
+class Window(UIA):
+    """
+    Custom Window class to handle specific focus behaviors for enhanced accessibility.
+    """
+
+    def event_gainFocus(self):
+        """
+        This method is triggered when a window element gains focus.
+        It adjusts the focus to specific child elements for better navigation.
+        """
+        if self.name.startswith('v2rayN') and self.firstChild.role != Role.WINDOW:
+            # Set focus to a specific child element in v2rayN application
+            self.children[1].firstChild.setFocus()
+        elif (
+            not self.name and len(self.children) == 1 and
+            self.firstChild.firstChild.firstChild.firstChild and
+            self.firstChild.firstChild.firstChild.firstChild.name == "Clear system proxy"
+        ):
+            # Focus on the designated child element in the application window
+            self.firstChild.firstChild.firstChild.setFocus()
 
 
 class AppModule(appModuleHandler.AppModule):
@@ -40,6 +64,11 @@ class AppModule(appModuleHandler.AppModule):
                 else obj.name
             )
             obj.name = name
+            # Remove default prefix from the value if it starts with "ServiceLib."
+            obj.value = (
+                "" if obj.value.startswith('ServiceLib.')
+                else obj.value
+            )
         elif obj.role == Role.EDITABLETEXT:
             # Use names of adjacent static text elements for editable text fields if available
             name = (
@@ -48,17 +77,29 @@ class AppModule(appModuleHandler.AppModule):
                 else obj.name
             )
             obj.name = name
+        elif obj.role == Role.LISTITEM:
+            # Adjust name for list items
+            name = (
+                obj.firstChild.name if obj.firstChild and obj.firstChild.role == Role.STATICTEXT and obj.firstChild.name
+                else obj.firstChild.firstChild.name if obj.firstChild and obj.firstChild.firstChild and obj.firstChild.firstChild.role == Role.STATICTEXT and obj.firstChild.firstChild.name
+                else obj.name
+            )
+            obj.name = (
+                name[name.index('(') + 1:-1] if name.startswith('V3-') and name.endswith(')')
+                else name
+            )
+        elif obj.role == Role.RADIOBUTTON:
+            # Adjust name for radio buttons
+            name = (
+                obj.firstChild.name if (not obj.name or obj.name.startswith("ServiceLib.")) and obj.firstChild and obj.firstChild.role == Role.STATICTEXT and obj.firstChild.name
+                else obj.name
+            )
+            obj.name = name
 
-    def event_gainFocus(self, obj: NVDAObject, nextHandler):
+    def chooseNVDAObjectOverlayClasses(self, obj, clsList):
         """
-        Set focus on a specific child element when the main application window is activated.
-        This applies only if the child element matches the defined condition.
+        Add custom overlay classes for NVDA objects.
+        If the object is a window, insert the custom Window class.
         """
-        if (
-            obj.role == Role.WINDOW and
-            obj.firstChild.firstChild.firstChild.firstChild and
-            obj.firstChild.firstChild.firstChild.firstChild.name == "Clear system proxy"
-        ):
-            # Focus on the designated child element in the application window
-            obj.firstChild.firstChild.firstChild.setFocus()
-        nextHandler()  # Call the default focus handling logic
+        if obj.role == Role.WINDOW:
+            clsList.insert(0, Window)
