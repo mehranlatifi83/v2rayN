@@ -17,14 +17,15 @@ class Window(UIA):
         This method is triggered when a window element gains focus.
         It adjusts the focus to specific child elements for better navigation.
         """
-        if self.name.startswith('v2rayN') and self.firstChild.role != Role.WINDOW:
+        if self.name.startswith('v2rayN') and self.children and self.children[1].role == Role.TOOLBAR and self.firstChild.role != Role.WINDOW:
             # Set focus to a specific child element in v2rayN application
-            self.children[1].firstChild.setFocus()
-        elif (
-            not self.name and len(self.children) == 1 and
-            self.firstChild.firstChild.firstChild.firstChild and
-            self.firstChild.firstChild.firstChild.firstChild.name == "Clear system proxy"
-        ):
+            try:
+                self.children[1].firstChild.setFocus()
+            except Exception as e:
+                api.getForegroundObject().children[1].lastChild.setFocus()
+        elif (not self.name and len(self.children) == 1
+              and self.firstChild.firstChild.firstChild.firstChild
+              and self.firstChild.firstChild.firstChild.firstChild.name == "Clear system proxy"):
             # Focus on the designated child element in the application window
             self.firstChild.firstChild.firstChild.setFocus()
 
@@ -101,5 +102,5 @@ class AppModule(appModuleHandler.AppModule):
         Add custom overlay classes for NVDA objects.
         If the object is a window, insert the custom Window class.
         """
-        if obj.role == Role.WINDOW:
+        if obj.role == Role.WINDOW and isinstance(obj, UIA):
             clsList.insert(0, Window)
