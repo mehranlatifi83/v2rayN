@@ -22,8 +22,6 @@ class Window(UIA):
         This method is triggered when a window element gains focus.
         It adjusts the focus to specific child elements for better navigation.
         """
-        if self.firstChild.role == Role.DIALOG:
-            message("tttt")
         if self.name.startswith('v2rayN') and self.children and self.children[1].role == Role.TOOLBAR and self.firstChild.role != Role.WINDOW:
             # Set focus to a specific child element in v2rayN application
             try:
