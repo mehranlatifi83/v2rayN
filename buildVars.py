@@ -20,12 +20,12 @@ addon_info = {
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on
 	# to be shown on installation and add-on information found in Add-ons Manager.
-	"addon_summary": _("v2rayN"),
+	"addon_summary": "v2rayN",
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("""Accessibility improvements for the v2rayN application"""),
 	# version
-	"addon_version": "0.4.1",
+	"addon_version": "0.5",
 	# Author(s)
 	"addon_author": "Mehran Latifi<mehran.latifi8383@gmail.com>",
 	# URL for the add-on documentation support

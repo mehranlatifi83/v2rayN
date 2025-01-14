@@ -3,13 +3,13 @@
 	"displayName": "v2rayN",
 	"URL": "",
 	"description": "Accessibility improvements for the v2rayN application",
-	"sha256": "04d98bdf98af0209eb1da6fd155769b2ffc1311dc257b10395d46979d3aaa427",
+	"sha256": "0cae1ba08466803d188884a632181587ee7bbba8b758d0350cd8a89376b519fb",
 	"homepage": "https://github.com/mehranlatifi83/v2rayN",
-	"addonVersionName": "0.4.1",
+	"addonVersionName": "0.5",
 	"addonVersionNumber": {
 		"major": 0,
-		"minor": 4,
-		"patch": 1
+		"minor": 5,
+		"patch": 0
 	},
 	"minNVDAVersion": {
 		"major": 2023,
