@@ -4,6 +4,10 @@ import addonHandler
 import keyboardHandler
 from NVDAObjects import NVDAObject
 from controlTypes import Role, State
+# import UIAHandler
+# import comtypes
+# from comtypes.client import CreateObject
+# from UIAHandler import UIA_controlTypeIDs
 import api
 from NVDAObjects.UIA import UIA
 from scriptHandler import script
@@ -34,14 +38,33 @@ class Window(UIA):
               and self.firstChild.firstChild.firstChild
               and self.firstChild.firstChild.firstChild.UIAAutomationId == 'menuSystemProxyClear'):
             # Focus on the designated child element in the application window
-            self.firstChild.firstChild.firstChild.setFocus()
+            try:
+                self.firstChild.firstChild.firstChild.setFocus()
+            except Exception as e:
+                pass
 
 
 class Toggle(UIA):
     def event_stateChange(self):
-        if self.UIAAutomationId and self.UIAAutomationId == 'PART_Toggle':
-            api.getForegroundObject(
-            ).firstChild.firstChild.children[1].setFocus()
+        if State.PRESSED in self.states:
+            message("Pressed")
+            if self.UIAAutomationId and self.UIAAutomationId == 'PART_Toggle':
+                api.getForegroundObject(
+                ).firstChild.firstChild.children[1].setFocus()
+        else:
+            message("Not pressed")
+
+
+class Combobox(UIA):
+    @script(gesture="kb:downArrow")
+    def script_focusToNextItem(self, gesture):
+        keyboardHandler.KeyboardInputGesture.fromName("alt+downArrow").send()
+        keyboardHandler.KeyboardInputGesture.fromName("downArrow").send()
+
+    @script(gesture="kb:upArrow")
+    def script_focusToPreviousItem(self, gesture):
+        keyboardHandler.KeyboardInputGesture.fromName("alt+downArrow").send()
+        keyboardHandler.KeyboardInputGesture.fromName("upArrow").send()
 
 
 class AppModule(appModuleHandler.AppModule):
@@ -112,7 +135,8 @@ class AppModule(appModuleHandler.AppModule):
             # Adjust name for list items
             name = (
                 obj.firstChild.name if obj.firstChild and obj.firstChild.role == Role.STATICTEXT and obj.firstChild.name
-                else f"{obj.children[1].name} {obj.children[2].name}" if len(obj.children) >= 3 and obj.children[1].role == Role.STATICTEXT and obj.children[1].name and obj.children[2].role == Role.STATICTEXT and obj.children[2].name
+                else f"{obj.children[1].name} {obj.children[2].name} Pressed" if len(obj.children) >= 3 and obj.children[0].role == Role.TOGGLEBUTTON and State.PRESSED in obj.children[0].states and obj.children[1].role == Role.STATICTEXT and obj.children[1].name and obj.children[2].role == Role.STATICTEXT and obj.children[2].name
+                else f"{obj.children[1].name} {obj.children[2].name} Not pressed" if len(obj.children) >= 3 and obj.children[0].role == Role.TOGGLEBUTTON and State.PRESSED not in obj.children[0].states and obj.children[1].role == Role.STATICTEXT and obj.children[1].name and obj.children[2].role == Role.STATICTEXT and obj.children[2].name
                 else obj.firstChild.firstChild.name if obj.firstChild and obj.firstChild.firstChild and obj.firstChild.firstChild.role == Role.STATICTEXT and obj.firstChild.firstChild.name
                 else obj.name
             )
@@ -126,6 +150,10 @@ class AppModule(appModuleHandler.AppModule):
                 obj.firstChild.name if (not obj.name or obj.name.startswith("ServiceLib.")) and obj.firstChild and obj.firstChild.role == Role.STATICTEXT and obj.firstChild.name
                 else obj.name
             )
+            obj.name = name
+        elif obj.role and obj.role == Role.TAB:
+            name = obj.firstChild.name if obj.name.startswith(
+                "System.Windows.Controls.TabItem") and obj.firstChild and obj.firstChild.role == Role.STATICTEXT else obj.name
             obj.name = name
         elif obj.role and obj.role == Role.DATAITEM:
             if obj.name and obj.name.startswith("ServiceLib."):
@@ -145,6 +173,8 @@ class AppModule(appModuleHandler.AppModule):
                 clsList.insert(0, Window)
             elif obj.role and obj.role == Role.TOGGLEBUTTON:
                 clsList.insert(0, Toggle)
+            elif obj.role and obj.role == Role.COMBOBOX:
+                clsList.insert(0, Combobox)
 
     def event_focusEntered(self, obj: NVDAObject, nextHandler):
         if obj.role and obj.role == Role.DATAGRID:
@@ -174,7 +204,7 @@ class AppModule(appModuleHandler.AppModule):
 
         nextHandler()
 
-    @ script(gesture="kb:tab")
+    @script(gesture="kb:tab")
     def script_handleTabKey(self, gesture):
         obj = api.getFocusObject()
         if obj.role and obj.role == Role.MENUITEM and obj.UIAAutomationId and obj.UIAAutomationId == 'menuClose':
@@ -184,6 +214,20 @@ class AppModule(appModuleHandler.AppModule):
                     targetChild.setFocus()
             except Exception as e:
                 pass
+        # elif obj.role and obj.role == Role.THUMB and obj.next.role and obj.next.role == Role.TABCONTROL and obj.next.UIAAutomationId == "tabMain1":
+            # forground = api.getForegroundObject()
+            # obj = next((obj for obj in forground.children if obj.role ==
+                #    Role.TABCONTROL and obj.UIAAutomationId == "tabMain1"), None)
+            # if obj and obj.firstChild and obj.firstChild.UIAElement:
+                # uia = CreateObject("UIAutomationClient.CUIAutomation")
+                # uiaElement = obj.firstChild.UIAElement
+
+                # استفاده از متد GetCurrentPropertyValue برای دریافت مقدار درست
+                # focusable_property = uiaElement.GetCurrentPropertyValue(
+                # UIAHandler.UIA_IsKeyboardFocusablePropertyId)
+
+                # if focusable_property is not None and not focusable_property:
+                # UIAHandler.handler.setFocus(uiaElement)  # فعال کردن فوکوس
         elif obj.role and obj.role == Role.TAB and obj.parent and obj.parent.parent and obj.parent.parent.role and obj.parent.parent.role == Role.DIALOG:
             firstFocusableChild = next(
                 (obj for obj in obj.children if State.FOCUSABLE in obj.states), None)
@@ -241,7 +285,7 @@ class AppModule(appModuleHandler.AppModule):
         else:
             gesture.send()
 
-    @ script(gesture="kb:shift+tab")
+    @script(gesture="kb:shift+tab")
     def script_handleShiftAndTabKey(self, gesture):
         obj = api.getFocusObject()
         if obj.role and obj.role == Role.TOGGLEBUTTON and obj.UIAAutomationId and obj.UIAAutomationId == 'togEnableTun':
@@ -310,4 +354,22 @@ class AppModule(appModuleHandler.AppModule):
         if obj.role and obj.role == Role.MENUITEM or obj.role == Role.COMBOBOX:
             keyboardHandler.KeyboardInputGesture.fromName("enter").send()
         else:
+            if obj.role and obj.role == Role.LISTITEM and len(obj.children) >= 3 and obj.children[0].role == Role.TOGGLEBUTTON and obj.children[1].role == Role.STATICTEXT and obj.children[2].role == Role.STATICTEXT:
+                obj.children[0].setFocus()
+                gesture.send()
+                obj.setFocus()
+                if State.PRESSED in obj.children[0].states:
+                    message("Pressed")
+                else:
+                    message("Not pressed")
+                return
             gesture.send()
+
+    @script(gesture="kb:escape")
+    def script_handleEscape(self, gesture):
+        gesture.send()
+        forground = api.getForegroundObject()
+        if forground.children[1].role == Role.TOOLBAR:
+            forground.children[1].lastChild.setFocus()
+        elif forground.children[2] and forground.children[2].role == Role.TOOLBAR:
+            forground.children[2].lastChild.setFocus()
