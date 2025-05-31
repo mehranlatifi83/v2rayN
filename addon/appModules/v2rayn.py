@@ -32,7 +32,7 @@ class Window(UIA):
             try:
                 self.children[1].lastChild.setFocus()
             except Exception as e:
-                api.getForegroundObject().children[1].lastChild.setFocus()
+                api.getForegroundObject().children[1].children[1].lastChild.setFocus()
         elif (not self.name and len(self.children) == 1
               and self.firstChild.firstChild
               and self.firstChild.firstChild.firstChild
@@ -48,9 +48,11 @@ class Toggle(UIA):
     def event_stateChange(self):
         if State.PRESSED in self.states:
             message("Pressed")
-            if self.UIAAutomationId and self.UIAAutomationId == 'PART_Toggle':
+            if self.UIAAutomationId and self.UIAAutomationId == 'PART_Toggle' and self.parent and self.parent.role and self.parent.role == Role.TOOLBAR:
                 api.getForegroundObject(
                 ).firstChild.firstChild.children[1].setFocus()
+            if self.UIAAutomationId and self.UIAAutomationId == 'PART_Toggle' and self.parent and self.parent.role and self.parent.role == Role.PANE and self.parent.parent and self.parent.parent.role and self.parent.parent.role == Role.DIALOG:
+                self.parent.parent.firstChild.children[1].setFocus()
         else:
             message("Not pressed")
 
@@ -207,7 +209,15 @@ class AppModule(appModuleHandler.AppModule):
     @script(gesture="kb:tab")
     def script_handleTabKey(self, gesture):
         obj = api.getFocusObject()
-        if obj.role and obj.role == Role.MENUITEM and obj.UIAAutomationId and obj.UIAAutomationId == 'menuClose':
+        if obj.role and obj.role == Role.TOGGLEBUTTON and obj.UIAAutomationId and obj.UIAAutomationId == 'PART_Toggle' and obj.parent and obj.parent.role and obj.parent.role == Role.TOOLBAR:
+            try:
+                targetChild = obj.parent.children[1].firstChild
+                if targetChild:
+                    targetChild.setFocus()
+            except Exception as e:
+                pass
+
+        elif obj.role and obj.role == Role.MENUITEM and obj.UIAAutomationId and obj.UIAAutomationId == 'menuClose':
             try:
                 targetChild = obj.parent.parent.next.children[5]
                 if targetChild:
@@ -288,7 +298,15 @@ class AppModule(appModuleHandler.AppModule):
     @script(gesture="kb:shift+tab")
     def script_handleShiftAndTabKey(self, gesture):
         obj = api.getFocusObject()
-        if obj.role and obj.role == Role.TOGGLEBUTTON and obj.UIAAutomationId and obj.UIAAutomationId == 'togEnableTun':
+        if obj.role and obj.role == Role.MENUITEM and obj.name and obj.name == 'Configurations Menu item':
+            try:
+                targetChild = obj.parent.parent.lastChild
+                if targetChild:
+                    targetChild.setFocus()
+            except Exception as e:
+                pass
+
+        elif obj.role and obj.role == Role.TOGGLEBUTTON and obj.UIAAutomationId and obj.UIAAutomationId == 'togEnableTun':
             try:
                 targetChild = obj.parent.previous.children[-2].firstChild
                 if targetChild:
@@ -369,7 +387,7 @@ class AppModule(appModuleHandler.AppModule):
     def script_handleEscape(self, gesture):
         gesture.send()
         forground = api.getForegroundObject()
-        if forground.children[1].role == Role.TOOLBAR:
+        if forground.children and len(forground.children) > 2 and forground.children[1].role == Role.TOOLBAR:
             forground.children[1].lastChild.setFocus()
-        elif forground.children[2] and forground.children[2].role == Role.TOOLBAR:
+        elif forground.children and len(forground.children) > 3 and forground.children[2] and forground.children[2].role == Role.TOOLBAR:
             forground.children[2].lastChild.setFocus()
