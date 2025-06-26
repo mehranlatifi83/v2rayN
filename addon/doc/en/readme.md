@@ -15,4 +15,4 @@ The settings layout has been redesigned for consistency and ease of navigation.
 - Announcing changes and active options in Combobox with Arrows
 
 ## Compatibility
-- **NVDA Version**: 2023.1 and above.
+- **NVDA Version**: 2024.1 and above.
