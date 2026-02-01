@@ -8,11 +8,20 @@ An NVDA addon to improve the accessibility of the v2rayN application.
 
 ## Features
 - Adds proper labels to all object types
-- Focus management fixes in the system tray menu and v2rayN windows.
-- Improved Screen Reader Feedback in tables, data grids, and static texts, ensuring users receive clear and relevant information about interface elements.
-- Standardized Settings Layout:
-The settings layout has been redesigned for consistency and ease of navigation.
-- Announcing changes and active options in Combobox with Arrows
+- Improved focus management in v2rayN windows, dialogs, and the system tray menu to ensure predictable and stable navigation
+- Enhanced screen reader feedback for tables, data grids, lists, and static texts, providing clear and meaningful announcements
+- Keyboard-based navigation for faster access to core interface elements without relying on the mouse
+- Context-aware shortcut handling that automatically disables custom navigation when dialogs are open
+- Standardized and keyboard-friendly settings layout for easier and more consistent navigation
+- Announces combobox value changes and active options using arrow keys
+- Advanced status bar reader with support for reading, copying to clipboard, and browse mode review
+
+## Keyboard Shortcuts
+- **Ctrl+Tab / Ctrl+Shift+Tab**: Switch between server groups
+- **Alt+P**: Move focus directly to the Profiles table
+- **Alt+S**: Focus and open the System Proxy combobox
+- **Alt+E**: Toggle TUN mode
+- **NVDA+End**: Read, copy, or review status bar information (multi-press)
 
 ## Compatibility
 - **NVDA Version**: 2024.1 and above.

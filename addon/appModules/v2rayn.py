@@ -10,8 +10,9 @@ from controlTypes import Role, State
 # from UIAHandler import UIA_controlTypeIDs
 import api
 from NVDAObjects.UIA import UIA
+import scriptHandler
 from scriptHandler import script
-from ui import message
+from ui import message, browseableMessage
 from ctypes import windll
 
 addonHandler.initTranslation()
@@ -74,6 +75,26 @@ class AppModule(appModuleHandler.AppModule):
     Custom app module to adjust element names and handle specific focus behaviors
     for enhanced accessibility.
     """
+
+    def _findDescendant(self, root, role=None, automationId=None, maxDepth=30):
+        """Recursively find a descendant matching role and/or UIAAutomationId."""
+        if not root or maxDepth <= 0:
+            return None
+
+        try:
+            if role is None or getattr(root, "role", None) == role:
+                if automationId is None or getattr(root, "UIAAutomationId", None) == automationId:
+                    return root
+        except Exception:
+            pass
+        try:
+            for child in getattr(root, "children", []) or []:
+                found = self._findDescendant(child, role=role, automationId=automationId, maxDepth=maxDepth - 1)
+                if found:
+                    return found
+        except Exception:
+            pass
+        return None
 
     def maximize_window(self, hwnd):
         """
@@ -391,3 +412,255 @@ class AppModule(appModuleHandler.AppModule):
             forground.children[1].lastChild.setFocus()
         elif forground.children and len(forground.children) > 3 and forground.children[2] and forground.children[2].role == Role.TOOLBAR:
             forground.children[2].lastChild.setFocus()
+
+    @script(gesture="kb:alt+p")
+    def script_focusProfilesTable(self, gesture):
+        fg = api.getForegroundObject()
+
+        grid = self._findDescendant(fg, role=Role.DATAGRID, automationId="lstProfiles")
+        if not grid:
+            message(_("Profiles table not found"))
+            return
+
+        grid.setFocus()
+        keyboardHandler.KeyboardInputGesture.fromName("tab").send()
+
+    @script(gesture="kb:nvda+end")
+    def script_readStatusbar(self, gesture):
+        fg = api.getForegroundObject()
+
+        running_server_display = self._findDescendant(
+            fg, role=Role.STATICTEXT, automationId="txtRunningServerDisplay"
+        )
+        running_info_display = self._findDescendant(
+            fg, role=Role.STATICTEXT, automationId="txtRunningInfoDisplay"
+        )
+        inbound_display = self._findDescendant(
+            fg, role=Role.STATICTEXT, automationId="txtInboundDisplay"
+        )
+        inbound_lan_display = self._findDescendant(
+            fg, role=Role.STATICTEXT, automationId="txtInboundLanDisplay"
+        )
+
+        lines = []
+
+        if running_server_display and running_server_display.name:
+            lines.append(running_server_display.name)
+
+        if running_info_display and running_info_display.name:
+            lines.append(running_info_display.name)
+
+        if inbound_display and inbound_display.name:
+            lines.append(_("Inbound: {text}").format(text=inbound_display.name))
+
+        if inbound_lan_display and inbound_lan_display.name:
+            lines.append(_("Inbound LAN: {text}").format(text=inbound_lan_display.name))
+
+        if not lines:
+            message(_("No status bar information found"))
+            return
+
+        # متن برای کپی (یک خط)
+        clipboard_text = ", ".join(lines)
+
+        # متن برای browse mode (چند خط، تمیزتر)
+        browse_text = "\n".join(lines)
+
+        repeat = scriptHandler.getLastScriptRepeatCount()
+
+        # 3rd time browse mode
+        if repeat >= 2:
+            browseableMessage(
+                browse_text,
+                title=_("v2rayN status information")
+            )
+
+        # Second time: copy
+        elif repeat >= 1:
+            try:
+                api.copyToClip(clipboard_text)
+                message(_("Statusbar copied to clipboard"))
+            except Exception:
+                message(_("Failed to copy statusbar"))
+
+        # First time: read only
+        else:
+            message(clipboard_text)
+
+    @script(gesture="kb:alt+e")
+    def script_changeTunMode(self, gesture):
+        fg = api.getForegroundObject()
+
+        tunToggle = self._findDescendant(fg, role=Role.TOGGLEBUTTON, automationId="togEnableTun")
+        if not tunToggle:
+            message(_("The enable tun button not found"))
+            return
+
+        tunToggle.doAction()
+
+    def _speakSelectedItem(self, item):
+        """Read selected item (name/value)"""
+        if not item:
+            return
+        try:
+            # If NVDA has a proper name for this object, speak it.
+            if getattr(item, "name", None):
+                message(item.name)
+                return
+        except Exception:
+            pass
+        try:
+            # fallback
+            message(str(item))
+        except Exception:
+            pass
+
+    def _goToProfilesTable(self):
+        """After selecting group, jump to profiles table like Alt+P."""
+        try:
+            keyboardHandler.KeyboardInputGesture.fromName("tab").send()
+        except Exception:
+            # If this fails, stay silent to avoid interrupting the user.
+            pass
+
+    def _hasOpenDialog(self):
+        """True if any dialog is present under the foreground object."""
+        fg = api.getForegroundObject()
+        dlg = self._findDescendant(fg, role=Role.DIALOG, automationId=None, maxDepth=40)
+        return bool(dlg)
+
+    def _shouldHandleGroupSwitch(self):
+        """Only handle Ctrl+Tab group switch when NO dialog is open."""
+        return not self._hasOpenDialog()
+
+    def _getLstGroupItems(self):
+        fg = api.getForegroundObject()
+        lst = self._findDescendant(fg, role=Role.LIST, automationId="lstGroup")
+        if not lst:
+            return None, []
+        try:
+            items = [c for c in (lst.children or []) if getattr(c, "role", None) in (Role.LISTITEM, Role.TAB, Role.UNKNOWN, Role.BUTTON)]
+        except Exception:
+            items = []
+        # If the filtered list is empty, fall back to all children.
+        if not items:
+            try:
+                items = list(lst.children or [])
+            except Exception:
+                items = []
+        return lst, items
+
+    def _findSelectedIndex(self, items):
+        for i, it in enumerate(items):
+            try:
+                if State.SELECTED in it.states:
+                    return i
+            except Exception:
+                pass
+        return -1
+
+    def _doSelectItem(self, item):
+        """Prefer doAction; fallback to setFocus+enter if needed.
+        After selection: speak it, then send Alt+P to jump to table.
+        """
+        if not item:
+            return False
+
+        selected = False
+
+        try:
+            item.doAction()
+            selected = True
+        except Exception:
+            try:
+                item.setFocus()
+                keyboardHandler.KeyboardInputGesture.fromName("enter").send()
+                selected = True
+            except Exception:
+                selected = False
+
+        if selected:
+            # After selection, state/name may update; try speaking the same item first.
+            # (Optionally, you can re-fetch the selected item from the list.)
+            try:
+                # We try to read from the same item
+                self._speakSelectedItem(item)
+            except Exception:
+                pass
+
+            # Go to the table
+            self._goToProfilesTable()
+
+        return selected
+
+    @script(gesture="kb:control+tab")
+    def script_nextGroup(self, gesture):
+        # Only when the dialog is not open
+        if not self._shouldHandleGroupSwitch():
+            gesture.send()
+            return
+
+        lst, items = self._getLstGroupItems()
+        if not lst or not items:
+            gesture.send()
+            return
+
+        sel = self._findSelectedIndex(items)
+
+        # If nothing was selected → first
+        if sel == -1:
+            if not self._doSelectItem(items[0]):
+                gesture.send()
+            return
+
+        # wrap
+        nextIndex = 0 if sel >= (len(items) - 1) else (sel + 1)
+        if not self._doSelectItem(items[nextIndex]):
+            gesture.send()
+
+    @script(gesture="kb:control+shift+tab")
+    def script_prevGroup(self, gesture):
+        # Only when the dialog is not open
+        if not self._shouldHandleGroupSwitch():
+            gesture.send()
+            return
+
+        lst, items = self._getLstGroupItems()
+        if not lst or not items:
+            gesture.send()
+            return
+
+        sel = self._findSelectedIndex(items)
+
+        # If nothing was selected → Last
+        if sel == -1:
+            if not self._doSelectItem(items[-1]):
+                gesture.send()
+            return
+
+        # wrap
+        prevIndex = (len(items) - 1) if sel <= 0 else (sel - 1)
+        if not self._doSelectItem(items[prevIndex]):
+            gesture.send()
+
+    @script(gesture="kb:alt+s")
+    def script_openSystemProxyCombo(self, gesture):
+        fg = api.getForegroundObject()
+
+        cmb = self._findDescendant(fg, role=Role.COMBOBOX, automationId="cmbSystemProxy")
+        if not cmb:
+            message(_("System proxy combo not found"))
+            return
+
+        try:
+            cmb.setFocus()
+        except Exception:
+            # If setFocus fails, fall back to sending the original gesture.
+            gesture.send()
+            return
+
+        # Open the combo / move to the next option.
+        try:
+            keyboardHandler.KeyboardInputGesture.fromName("downArrow").send()
+        except Exception:
+            pass

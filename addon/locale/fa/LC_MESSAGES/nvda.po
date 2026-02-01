@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: 'v2rayN' '0.5'\n"
+"Project-Id-Version: 'v2rayN' '0.8.0'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2025-01-14 18:21+0330\n"
-"PO-Revision-Date: 2025-01-14 18:23+0330\n"
+"POT-Creation-Date: 2026-02-01 20:44+0330\n"
+"PO-Revision-Date: 2026-02-01 21:16+0330\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fa\n"
@@ -18,9 +18,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.5\n"
 
-#: addon\appModules\v2rayn.py:82
+#: addon\appModules\v2rayn.py:123
 msgid "Settings"
 msgstr "تنظیمات"
+
+#: addon\appModules\v2rayn.py:422
+msgid "Profiles table not found"
+msgstr "جدول پروفایل‌ها یافت نشد"
+
+#: addon\appModules\v2rayn.py:454
+#, python-brace-format
+msgid "Inbound: {text}"
+msgstr "Inbound: {text}"
+
+#: addon\appModules\v2rayn.py:457
+#, python-brace-format
+msgid "Inbound LAN: {text}"
+msgstr "Inbound LAN: {text}"
+
+#: addon\appModules\v2rayn.py:460
+msgid "No status bar information found"
+msgstr "اطلاعاتی از نوار وضعیت یافت نشد"
+
+#: addon\appModules\v2rayn.py:475
+msgid "v2rayN status information"
+msgstr "اطلاعات وضعیت v2rayN"
+
+#: addon\appModules\v2rayn.py:482
+msgid "Statusbar copied to clipboard"
+msgstr "نوار وضعیت در کلیپ‌بورد کپی شد"
+
+#: addon\appModules\v2rayn.py:484
+msgid "Failed to copy statusbar"
+msgstr "کپی نوار وضعیت ناموفق بود"
+
+#: addon\appModules\v2rayn.py:496
+msgid "The enable tun button not found"
+msgstr "دکمهٔ فعال‌سازی tunle پیدا نشد"
+
+#: addon\appModules\v2rayn.py:652
+msgid "System proxy combo not found"
+msgstr "Combo box پراکسی سیستم پیدا نشد"
 
 #. Add-on description
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
