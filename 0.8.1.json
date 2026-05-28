@@ -1,0 +1,29 @@
+{
+	"addonId": "v2rayN",
+	"displayName": "v2rayN",
+	"URL": "",
+	"description": "Accessibility improvements for the v2rayN application",
+	"sha256": "864e5e518923b35a5626ee73bac7e2fb4a1f232e75c04562efaeec5b38934615",
+	"homepage": "https://github.com/mehranlatifi83/v2rayN",
+	"addonVersionName": "0.8.1",
+	"addonVersionNumber": {
+		"major": 0,
+		"minor": 8,
+		"patch": 1
+	},
+	"minNVDAVersion": {
+		"major": 2024,
+		"minor": 1,
+		"patch": 0
+	},
+	"lastTestedVersion": {
+		"major": 2026,
+		"minor": 1,
+		"patch": 1
+	},
+	"channel": "stable",
+	"publisher": "",
+	"sourceURL": "https://github.com/mehranlatifi83/v2rayN",
+	"license": "GPL 2",
+	"licenseURL": "https://www.gnu.org/licenses/gpl-2.0.html"
+}
